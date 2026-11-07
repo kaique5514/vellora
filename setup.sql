@@ -53,3 +53,15 @@ drop policy if exists "dona troca fotos" on storage.objects;
 create policy "dona troca fotos" on storage.objects for update to authenticated using (bucket_id = 'produtos');
 drop policy if exists "dona apaga fotos" on storage.objects;
 create policy "dona apaga fotos" on storage.objects for delete to authenticated using (bucket_id = 'produtos');
+
+-- Vídeos das categorias (faixas Brincos, Colares...)
+create table if not exists categories (name text primary key, video_url text);
+alter table categories enable row level security;
+drop policy if exists "categorias publicas" on categories;
+create policy "categorias publicas" on categories for select using (true);
+drop policy if exists "dona insere categoria" on categories;
+create policy "dona insere categoria" on categories for insert to authenticated with check (true);
+drop policy if exists "dona edita categoria" on categories;
+create policy "dona edita categoria" on categories for update to authenticated using (true);
+drop policy if exists "dona exclui categoria" on categories;
+create policy "dona exclui categoria" on categories for delete to authenticated using (true);

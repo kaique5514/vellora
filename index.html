@@ -17,14 +17,14 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-let P=[],S={store_name:'Vellora',tagline:'',whatsapp:''},filter='Todas',err='';
+let CV={},P=[],S={store_name:'Vellora',tagline:'',whatsapp:''},filter='Todas',err='';
 
 async function load(){
   if(!CFG.url||CFG.url.startsWith('COLE')){err='Configure o arquivo config.js.';return}
   const db=supabase.createClient(CFG.url,CFG.key);
-  const [p,s]=await Promise.all([db.from('products').select('*').order('created_at',{ascending:false}),db.from('settings').select('*').eq('id',1).maybeSingle()]);
+  const [p,s,c]=await Promise.all([db.from('products').select('*').order('created_at',{ascending:false}),db.from('settings').select('*').eq('id',1).maybeSingle(),db.from('categories').select('*')]);
   if(p.error){err='Não foi possível carregar o catálogo.';return}
-  P=p.data||[];if(s.data)S=s.data;
+  P=p.data||[];if(s.data)S=s.data;CV={};(c.data||[]).forEach(x=>CV[x.name]=x.video_url);
 }
 function card(p,i){
   const off=p.old_price>p.price&&p.price>0?Math.round((1-p.price/p.old_price)*100):0,n=S.installments||5;
@@ -41,7 +41,7 @@ function render(){
   const mq='✦ Elegância ✦ Brilho ✦ Delicadeza ✦ Estilo ✦ Feito para você '.repeat(8);
   document.title=S.store_name+' Semijoias';
   const tiles=only.length>1?`<section class="tiles">${only.map(c=>{const q=P.find(p=>p.category===c&&p.image_url);
-    return `<div class="tile rv" data-c="${esc(c)}">${q?`<img loading="lazy" src="${esc(q.image_url)}" alt="">`:''}<span>${esc(c)}</span></div>`}).join('')}</section>`:'';
+    return `<div class="tile rv" data-c="${esc(c)}">${CV[c]?`<video autoplay muted loop playsinline preload="metadata"${q?` poster="${esc(q.image_url)}"`:''} src="${esc(CV[c])}"></video>`:q?`<img loading="lazy" src="${esc(q.image_url)}" alt="">`:''}<span>${esc(c)}</span></div>`}).join('')}</section>`:'';
   $('#app').innerHTML=`
   <header id="hd"><div class="logo">${esc(S.store_name)}<small>SEMIJOIAS</small></div></header>
   <section class="hero"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
@@ -56,6 +56,7 @@ function render(){
   const go=c=>{filter=c;render();$('#colecao').scrollIntoView({behavior:'smooth'})};
   document.querySelectorAll('.chip,.tile').forEach(b=>b.onclick=()=>go(b.dataset.c));
   document.querySelectorAll('.card').forEach(c=>c.onclick=()=>openProd(c.dataset.id));
+  document.querySelectorAll('.tile video').forEach(v=>{v.muted=true;v.play().catch(()=>{})});
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.1});
   document.querySelectorAll('.rv').forEach(el=>io.observe(el));onScroll();
 }

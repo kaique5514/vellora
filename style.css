@@ -82,3 +82,5 @@ input,textarea,select{width:100%;padding:11px 13px;border:1px solid var(--line);
 .parc{border:1px solid var(--line);padding:9px 6px;font-size:13px}
 .buy{border:0;background:#111;color:#fff;padding:13px;font:inherit;font-size:12px;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:.3s}
 .buy:hover{background:var(--gold)}.buy:disabled{background:var(--muted);cursor:default}
+
+.tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
