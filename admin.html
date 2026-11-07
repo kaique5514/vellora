@@ -42,7 +42,11 @@ function loginView(){
   <p><button class="btn" id="go" style="width:100%">Entrar</button></p><div id="msg" class="msg"></div></div>`;
   const go=async()=>{note('Entrando…');
     const {error}=await db.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
-    if(error)note('E-mail ou senha incorretos.',1);else panel()};
+    if(error){const m=error.message||'';
+      note(/invalid login/i.test(m)?'E-mail ou senha incorretos (ou usuário não confirmado). Detalhe: '+m
+        :/not confirmed/i.test(m)?'E-mail ainda não confirmado: no Supabase, abra o usuário e confirme-o.'
+        :/api key|apikey|jwt|fetch|network/i.test(m)?'Problema com o config.js (URL ou chave). Detalhe: '+m
+        :'Erro: '+m,1)}else panel()};
   $('#go').onclick=go;$('#pw').onkeydown=e=>{if(e.key==='Enter')go()};
 }
 
