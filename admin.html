@@ -59,6 +59,7 @@ async function panel(){
   <label>Nome da loja</label><input id="sn" value="${esc(S.store_name)}">
   <label>Frase de destaque</label><input id="st" value="${esc(S.tagline)}">
   <label>WhatsApp (com DDD, ex.: 11999998888)</label><input id="sw" value="${esc(S.whatsapp)}">
+  <label>Parcelas sem juros (ex.: 5 · use 1 para não mostrar)</label><input id="si" type="number" min="1" max="12" value="${S.installments||5}">
   <p><button class="btn sm" id="ss">Salvar dados</button></p></div>
   <div class="box"><div class="top"><h3 style="margin:0;font-size:26px">Peças (${P.length})</h3><button class="btn sm" id="add">+ Nova peça</button></div>
   ${P.map(p=>`<div class="item"><div class="th">${p.image_url?`<img src="${esc(p.image_url)}">`:''}</div>
@@ -66,7 +67,7 @@ async function panel(){
   <button class="btn sm ghost" data-e="${p.id}">Editar</button><button class="btn sm danger" data-d="${p.id}">Excluir</button></div>`).join('')||'<p class="hint">Nenhuma peça cadastrada ainda.</p>'}
   <div id="msg" class="msg"></div></div>`;
   $('#out').onclick=async()=>{await db.auth.signOut();loginView()};
-  $('#ss').onclick=async()=>{const {error}=await db.from('settings').upsert({id:1,store_name:$('#sn').value.trim()||'Vellora',tagline:$('#st').value.trim(),whatsapp:$('#sw').value.trim()});
+  $('#ss').onclick=async()=>{const {error}=await db.from('settings').upsert({id:1,store_name:$('#sn').value.trim()||'Vellora',tagline:$('#st').value.trim(),whatsapp:$('#sw').value.trim(),installments:parseInt($('#si').value)||5});
     note(error?'Erro ao salvar.':'Dados salvos ✓',!!error)};
   $('#add').onclick=()=>{edit={};file=null;formView()};
   root.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{edit={...P.find(p=>p.id===b.dataset.e)};file=null;formView()});
@@ -80,7 +81,8 @@ function formView(){
   <div id="prev" style="margin-top:8px">${p.image_url?`<img src="${esc(p.image_url)}" style="height:110px;border-radius:8px">`:''}</div>
   <label>Nome</label><input id="n" value="${esc(p.name)}">
   <div class="row2"><div><label>Preço (R$)</label><input id="pr" type="number" step="0.01" value="${p.price??''}"></div>
-  <div><label>Categoria</label><input id="ct" list="cl" value="${esc(p.category)}" placeholder="Brincos, Colares…"><datalist id="cl">${[...new Set(P.map(x=>x.category))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div></div>
+  <div><label>Preço antigo (opcional)</label><input id="po" type="number" step="0.01" value="${p.old_price??''}" placeholder="mostra o selo de desconto"></div></div>
+  <div style="margin-top:0"><label>Categoria</label><input id="ct" list="cl" value="${esc(p.category)}" placeholder="Brincos, Colares…"><datalist id="cl">${[...new Set(P.map(x=>x.category))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
   <label>Descrição</label><textarea id="d" rows="4">${esc(p.description)}</textarea>
   <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px"><input type="checkbox" id="so" style="width:auto" ${p.sold_out?'checked':''}> Peça esgotada</label>
   <p><button class="btn" id="ok">Salvar peça</button> <button class="btn ghost" id="bk">Voltar</button></p><div id="msg" class="msg"></div></div>`;
@@ -99,7 +101,7 @@ async function save(){
     if(url)await removeFile(url);
     url=db.storage.from('produtos').getPublicUrl(path).data.publicUrl;
   }
-  const row={name,price:parseFloat($('#pr').value)||0,category:$('#ct').value.trim()||'Outros',description:$('#d').value.trim(),image_url:url,sold_out:$('#so').checked};
+  const row={name,price:parseFloat($('#pr').value)||0,old_price:parseFloat($('#po').value)||null,category:$('#ct').value.trim()||'Outros',description:$('#d').value.trim(),image_url:url,sold_out:$('#so').checked};
   const r=edit.id?await db.from('products').update(row).eq('id',edit.id):await db.from('products').insert(row);
   if(r.error){note('Erro ao salvar a peça.',1);return}
   edit=null;file=null;panel();

@@ -26,33 +26,37 @@ async function load(){
   if(p.error){err='Não foi possível carregar o catálogo.';return}
   P=p.data||[];if(s.data)S=s.data;
 }
+function card(p,i){
+  const off=p.old_price>p.price&&p.price>0?Math.round((1-p.price/p.old_price)*100):0,n=S.installments||5;
+  return `<div class="card rv" style="transition-delay:${(i%2)*90}ms" data-id="${p.id}">
+    ${p.sold_out?'<span class="badge">Esgotado</span>':off?`<span class="badge">${off}% OFF</span>`:''}
+    <div class="ph">${p.image_url?`<img loading="lazy" src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'✦'}</div>
+    <div class="info"><h3>${esc(p.name)}</h3>
+    <div class="price">${off?`<s>${brl(p.old_price)}</s><i></i>`:''}<b>${brl(p.price)}</b></div>
+    ${n>1&&p.price>0?`<div class="parc">${n} x de <b>${brl(p.price/n)}</b> sem juros</div>`:''}
+    <button class="buy" ${p.sold_out?'disabled':''}>${p.sold_out?'Esgotado':'Comprar'}</button></div></div>`}
 function render(){
-  const cats=['Todas',...new Set(P.map(p=>p.category).filter(Boolean))];
+  const only=[...new Set(P.map(p=>p.category).filter(Boolean))],cats=['Todas',...only];
   const list=P.filter(p=>filter==='Todas'||p.category===filter);
   const mq='✦ Elegância ✦ Brilho ✦ Delicadeza ✦ Estilo ✦ Feito para você '.repeat(8);
   document.title=S.store_name+' Semijoias';
+  const tiles=only.length>1?`<section class="tiles">${only.map(c=>{const q=P.find(p=>p.category===c&&p.image_url);
+    return `<div class="tile rv" data-c="${esc(c)}">${q?`<img loading="lazy" src="${esc(q.image_url)}" alt="">`:''}<span>${esc(c)}</span></div>`}).join('')}</section>`:'';
   $('#app').innerHTML=`
   <header id="hd"><div class="logo">${esc(S.store_name)}<small>SEMIJOIAS</small></div></header>
   <section class="hero"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
   <div class="tag">Nova coleção</div><h1>${esc(S.store_name)}<em>Semijoias</em></h1><p>${esc(S.tagline)}</p>
   <div class="cta"><a class="btn" href="#colecao">Ver coleção</a></div></section>
   <div class="mq"><div>${mq}${mq}</div></div>
+  ${tiles}
   <section class="sec" id="colecao"><div class="tag">Catálogo</div><h2 class="rv">Peças que <em>brilham</em> com você</h2>
   <div class="chips rv">${cats.map(c=>`<button class="chip ${c===filter?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div></section>
-  <div class="grid">${err?`<div class="empty">${err}</div>`:list.length?list.map((p,i)=>`<div class="card rv" style="transition-delay:${(i%4)*90}ms" data-id="${p.id}">
-    ${p.sold_out?'<span class="badge">Esgotado</span>':''}
-    <div class="ph">${p.image_url?`<img loading="lazy" src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'✦'}<span class="ver">Ver peça</span></div>
-    <div class="info"><div class="cat">${esc(p.category)}</div><h3>${esc(p.name)}</h3><div class="price">${brl(p.price)}</div></div></div>`).join(''):'<div class="empty">Novidades chegando em breve ✦</div>'}</div>
+  <div class="grid">${err?`<div class="empty">${err}</div>`:list.length?list.map(card).join(''):'<div class="empty">Novidades chegando em breve ✦</div>'}</div>
   <footer>${esc(S.store_name)} Semijoias · feitas para brilhar</footer>`;
-  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{filter=b.dataset.c;render();$('#colecao').scrollIntoView({behavior:'smooth'})});
-  document.querySelectorAll('.card').forEach(c=>{
-    c.onclick=()=>openProd(c.dataset.id);
-    c.onmousemove=e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
-      c.classList.add('tl');c.style.transform=`rotateY(${(x-.5)*10}deg) rotateX(${(.5-y)*10}deg) translateZ(6px)`;
-      c.style.setProperty('--mx',x*100+'%');c.style.setProperty('--my',y*100+'%')};
-    c.onmouseleave=()=>{c.classList.remove('tl');c.style.transform=''};
-  });
-  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+  const go=c=>{filter=c;render();$('#colecao').scrollIntoView({behavior:'smooth'})};
+  document.querySelectorAll('.chip,.tile').forEach(b=>b.onclick=()=>go(b.dataset.c));
+  document.querySelectorAll('.card').forEach(c=>c.onclick=()=>openProd(c.dataset.id));
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.1});
   document.querySelectorAll('.rv').forEach(el=>io.observe(el));onScroll();
 }
 function onScroll(){$('#hd')?.classList.toggle('sc',scrollY>60)}
@@ -65,7 +69,8 @@ function openProd(id){
   $('#modal').innerHTML=`<button class="x" id="cl">×</button>
   <div class="ph">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'✦'}</div>
   <div class="body"><div class="cat">${esc(p.category)}</div><h2>${esc(p.name)}</h2>
-  <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold)">${brl(p.price)}</div>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold)">${p.old_price>p.price?`<s style="font-size:20px;color:var(--muted)">${brl(p.old_price)}</s> `:''}${brl(p.price)}</div>
+  ${(S.installments||5)>1&&p.price>0?`<div class="hint" style="font-size:14px">ou ${S.installments||5} x de ${brl(p.price/(S.installments||5))} sem juros</div>`:''}
   <p style="color:var(--muted);white-space:pre-wrap;margin:0">${esc(p.description)}</p>
   ${p.sold_out?'<span class="hint">Peça esgotada no momento.</span>':num?`<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${num}?text=${msg}">Pedir pelo WhatsApp</a>`:''}</div>`;
   $('#ovP').classList.add('show');$('#cl').onclick=()=>$('#ovP').classList.remove('show');
