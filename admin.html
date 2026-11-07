@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Área da loja · Vellora</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Jost:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.wrap{max-width:760px;margin:0 auto;padding:30px 5vw 80px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px;margin-top:20px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.top h1{margin:0;font-size:34px}
+.login{max-width:380px;margin:12vh auto 0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.item .th{width:52px;height:52px;background:var(--blush);flex:none;overflow:hidden;border-radius:8px}.item .th img{width:100%;height:100%;object-fit:cover}
+.item .n{flex:1;min-width:0}.item b{font-weight:400}
+.msg{font-size:13px;margin-top:10px;color:var(--muted)}.msg.bad{color:#c0564a}
+</style>
+</head>
+<body>
+<div class="wrap" id="root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const root=$('#root');
+if(!CFG.url||CFG.url.startsWith('COLE')){root.innerHTML='<div class="box">Configure o arquivo <b>config.js</b> primeiro.</div>';throw 0}
+const db=supabase.createClient(CFG.url,CFG.key);
+let P=[],S={},edit=null,file=null;
+
+function note(t,bad){const m=$('#msg');if(m){m.textContent=t;m.className='msg'+(bad?' bad':'')}}
+
+function loginView(){
+  root.innerHTML=`<div class="box login"><h1 style="margin:0 0 4px;font-size:34px">Área da loja</h1><p class="hint" style="margin:0">Acesso restrito.</p>
+  <label>E-mail</label><input id="em" type="email" autocomplete="username">
+  <label>Senha</label><input id="pw" type="password" autocomplete="current-password">
+  <p><button class="btn" id="go" style="width:100%">Entrar</button></p><div id="msg" class="msg"></div></div>`;
+  const go=async()=>{note('Entrando…');
+    const {error}=await db.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
+    if(error)note('E-mail ou senha incorretos.',1);else panel()};
+  $('#go').onclick=go;$('#pw').onkeydown=e=>{if(e.key==='Enter')go()};
+}
+
+async function panel(){
+  const [p,s]=await Promise.all([db.from('products').select('*').order('created_at',{ascending:false}),db.from('settings').select('*').eq('id',1).maybeSingle()]);
+  P=p.data||[];S=s.data||{id:1,store_name:'Vellora',tagline:'',whatsapp:''};
+  if(edit){formView();return}
+  root.innerHTML=`<div class="top"><h1>Área da loja</h1><div><a class="btn sm ghost" href="index.html" target="_blank">Ver catálogo</a> <button class="btn sm ghost" id="out">Sair</button></div></div>
+  <div class="box"><h3 style="margin:0;font-size:26px">Dados da loja</h3>
+  <label>Nome da loja</label><input id="sn" value="${esc(S.store_name)}">
+  <label>Frase de destaque</label><input id="st" value="${esc(S.tagline)}">
+  <label>WhatsApp (com DDD, ex.: 11999998888)</label><input id="sw" value="${esc(S.whatsapp)}">
+  <p><button class="btn sm" id="ss">Salvar dados</button></p></div>
+  <div class="box"><div class="top"><h3 style="margin:0;font-size:26px">Peças (${P.length})</h3><button class="btn sm" id="add">+ Nova peça</button></div>
+  ${P.map(p=>`<div class="item"><div class="th">${p.image_url?`<img src="${esc(p.image_url)}">`:''}</div>
+  <div class="n"><b>${esc(p.name)}</b><div class="hint">${esc(p.category)} · ${brl(p.price)}${p.sold_out?' · esgotado':''}</div></div>
+  <button class="btn sm ghost" data-e="${p.id}">Editar</button><button class="btn sm danger" data-d="${p.id}">Excluir</button></div>`).join('')||'<p class="hint">Nenhuma peça cadastrada ainda.</p>'}
+  <div id="msg" class="msg"></div></div>`;
+  $('#out').onclick=async()=>{await db.auth.signOut();loginView()};
+  $('#ss').onclick=async()=>{const {error}=await db.from('settings').upsert({id:1,store_name:$('#sn').value.trim()||'Vellora',tagline:$('#st').value.trim(),whatsapp:$('#sw').value.trim()});
+    note(error?'Erro ao salvar.':'Dados salvos ✓',!!error)};
+  $('#add').onclick=()=>{edit={};file=null;formView()};
+  root.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{edit={...P.find(p=>p.id===b.dataset.e)};file=null;formView()});
+  root.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>del(b.dataset.d));
+}
+
+function formView(){
+  const p=edit;
+  root.innerHTML=`<div class="top"><h1>${p.id?'Editar peça':'Nova peça'}</h1></div><div class="box">
+  <label>Foto</label><input type="file" id="f" accept="image/*">
+  <div id="prev" style="margin-top:8px">${p.image_url?`<img src="${esc(p.image_url)}" style="height:110px;border-radius:8px">`:''}</div>
+  <label>Nome</label><input id="n" value="${esc(p.name)}">
+  <div class="row2"><div><label>Preço (R$)</label><input id="pr" type="number" step="0.01" value="${p.price??''}"></div>
+  <div><label>Categoria</label><input id="ct" list="cl" value="${esc(p.category)}" placeholder="Brincos, Colares…"><datalist id="cl">${[...new Set(P.map(x=>x.category))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div></div>
+  <label>Descrição</label><textarea id="d" rows="4">${esc(p.description)}</textarea>
+  <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px"><input type="checkbox" id="so" style="width:auto" ${p.sold_out?'checked':''}> Peça esgotada</label>
+  <p><button class="btn" id="ok">Salvar peça</button> <button class="btn ghost" id="bk">Voltar</button></p><div id="msg" class="msg"></div></div>`;
+  $('#f').onchange=async e=>{const f=e.target.files[0];if(!f)return;file=await shrink(f);$('#prev').innerHTML=`<img src="${URL.createObjectURL(file)}" style="height:110px;border-radius:8px">`};
+  $('#bk').onclick=()=>{edit=null;panel()};
+  $('#ok').onclick=save;
+}
+
+async function save(){
+  const name=$('#n').value.trim();if(!name){note('Dê um nome à peça.',1);return}
+  note('Salvando…');let url=edit.image_url||'';
+  if(file){
+    const path=crypto.randomUUID()+'.jpg';
+    const up=await db.storage.from('produtos').upload(path,file,{contentType:'image/jpeg'});
+    if(up.error){note('Erro ao enviar a foto.',1);return}
+    if(url)await removeFile(url);
+    url=db.storage.from('produtos').getPublicUrl(path).data.publicUrl;
+  }
+  const row={name,price:parseFloat($('#pr').value)||0,category:$('#ct').value.trim()||'Outros',description:$('#d').value.trim(),image_url:url,sold_out:$('#so').checked};
+  const r=edit.id?await db.from('products').update(row).eq('id',edit.id):await db.from('products').insert(row);
+  if(r.error){note('Erro ao salvar a peça.',1);return}
+  edit=null;file=null;panel();
+}
+async function del(id){
+  if(!confirm('Excluir esta peça?'))return;
+  const p=P.find(x=>x.id===id);
+  const r=await db.from('products').delete().eq('id',id);
+  if(r.error){note('Erro ao excluir.',1);return}
+  if(p?.image_url)await removeFile(p.image_url);panel();
+}
+async function removeFile(url){const k=url.split('/produtos/')[1];if(k)await db.storage.from('produtos').remove([k])}
+
+function shrink(f){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+  const k=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',.82)};im.src=r.result};r.readAsDataURL(f)})}
+
+db.auth.getSession().then(({data})=>data.session?panel():loginView());
+</script>
+</body>
+</html>
