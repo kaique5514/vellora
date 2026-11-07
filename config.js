@@ -2,5 +2,5 @@
 // A chave "anon public" pode ficar no código: quem protege os dados são as regras do setup.sql.
 window.CFG = {
   url: "https://pmzrookdzllmeeupwdhz.supabase.co",
-  key: "sb_publishable_vvPij3E_s9HynKAr7P4_gw_UbUwlySO"
+  key: "e84cdc9c-fe79-428f-956c-ab2a12c4336c"
 };
