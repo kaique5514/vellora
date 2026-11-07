@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vellora Semijoias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf6f1;--surface:#fff;--ink:#2b2420;--muted:#8a7b70;--gold:#b88a44;--gold2:#e6c98b;--line:#eadfd2;--blush:#f3e4dc;--glass:rgba(250,246,241,.72);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#120e0c;--surface:#1c1613;--ink:#f4ebe0;--muted:#a89786;--line:#35291f;--blush:#261c17;--glass:rgba(18,14,12,.7)}}
+:root[data-theme="dark"]{--bg:#120e0c;--surface:#1c1613;--ink:#f4ebe0;--muted:#a89786;--line:#35291f;--blush:#261c17;--glass:rgba(18,14,12,.7)}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Jost',system-ui,sans-serif;font-weight:300;line-height:1.5;overflow-x:hidden}
+h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500}
+#sp{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#glow{position:fixed;width:420px;height:420px;border-radius:50%;pointer-events:none;z-index:0;background:radial-gradient(circle,rgba(230,201,139,.22),transparent 65%);transform:translate(-50%,-50%);left:-999px;top:-999px;transition:opacity .3s}
+#app{position:relative;z-index:1}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;justify-content:space-between;align-items:center;padding:20px 6vw;transition:.35s;border-bottom:1px solid transparent}
+header.sc{padding:11px 6vw;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:var(--line)}
+.logo{font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;letter-spacing:.34em;text-transform:uppercase;color:#fff;mix-blend-mode:normal;transition:.35s}
+header.sc .logo{color:var(--ink)}
+.logo small{display:block;font-family:'Jost',sans-serif;font-size:9px;letter-spacing:.55em;color:var(--gold2);margin-top:-2px}
+.hero{position:relative;margin-top:-76px;min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 6vw 80px;color:#fff;background:#140f0c;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:fl 14s ease-in-out infinite alternate}
+.b1{width:460px;height:460px;background:#b88a44;left:-8%;top:-10%}
+.b2{width:420px;height:420px;background:#a45a63;right:-6%;top:20%;animation-delay:-5s}
+.b3{width:360px;height:360px;background:#e6c98b;left:35%;bottom:-18%;opacity:.35;animation-delay:-9s}
+@keyframes fl{to{transform:translate(60px,40px) scale(1.18)}}
+.hero>*:not(.blob){position:relative}
+.tag{font-size:11px;letter-spacing:.55em;text-transform:uppercase;color:var(--gold2);opacity:0;animation:up .9s .1s forwards}
+.hero h1{margin:18px 0 6px;font-size:clamp(54px,13vw,150px);line-height:.95;font-weight:400;letter-spacing:.02em;background:linear-gradient(100deg,#e6c98b 0%,#fff 25%,#b88a44 50%,#fff 75%,#e6c98b 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:up 1s .25s forwards,shim 6s linear infinite;opacity:0}
+.hero h1 em{display:block;font-size:.36em;letter-spacing:.38em;text-transform:uppercase;font-style:normal;font-family:'Jost',sans-serif;font-weight:300;margin-top:.5em}
+.hero p{max-width:460px;color:#e6dacb;font-size:17px;opacity:0;animation:up 1s .5s forwards}
+.cta{margin-top:30px;opacity:0;animation:up 1s .7s forwards}
+@keyframes up{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes shim{to{background-position:-250% 0}}
+.scrl{position:absolute!important;bottom:26px;left:50%;width:1px;height:50px;background:linear-gradient(var(--gold2),transparent);animation:sl 2s ease-in-out infinite}
+@keyframes sl{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.mq{overflow:hidden;background:var(--ink);color:var(--gold2);padding:15px 0;white-space:nowrap;position:relative;z-index:1}
+.mq div{display:inline-block;animation:mq 28s linear infinite;font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.3em;text-transform:uppercase}
+@keyframes mq{to{transform:translateX(-50%)}}
+.sec{max-width:1300px;margin:0 auto;padding:80px 6vw 30px;text-align:center}
+.sec h2{font-size:clamp(34px,6vw,58px);margin:0;font-weight:400}
+.sec h2 em{color:var(--gold)}
+.sec .tag{animation:none;opacity:1}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:28px}
+.chip{position:relative;overflow:hidden;border:1px solid var(--line);background:transparent;color:var(--ink);padding:9px 22px;border-radius:99px;font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;transition:.3s;z-index:0}
+.chip::before{content:"";position:absolute;inset:0;background:var(--gold);transform:translateY(101%);transition:.35s;z-index:-1}
+.chip:hover::before,.chip.on::before{transform:none}
+.chip:hover,.chip.on{color:#fff;border-color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:28px;padding:30px 6vw 90px;max-width:1300px;margin:0 auto;perspective:1200px}
+.rv{opacity:0;transform:translateY(40px);transition:opacity .8s,transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transform-style:preserve-3d;transition:box-shadow .3s}
+.card.tl{transition:none}
+.card:hover{box-shadow:0 24px 50px -12px rgba(120,80,30,.35)}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:.3s;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.35),transparent 55%)}
+.card:hover::after{opacity:1}
+.ph{aspect-ratio:1/1.1;background:linear-gradient(135deg,var(--blush),var(--surface));overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--gold2);font-size:46px;position:relative}
+.ph img{width:100%;height:100%;object-fit:cover;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.card:hover .ph img{transform:scale(1.1)}
+.ver{position:absolute;left:50%;bottom:16px;transform:translate(-50%,20px);opacity:0;transition:.4s;background:var(--glass);backdrop-filter:blur(10px);color:var(--ink);padding:8px 20px;border-radius:99px;font-size:11px;letter-spacing:.25em;text-transform:uppercase;white-space:nowrap}
+.card:hover .ver{opacity:1;transform:translate(-50%,0)}
+.info{padding:18px 18px 22px;text-align:center}
+.cat{font-size:10px;letter-spacing:.38em;text-transform:uppercase;color:var(--gold)}
+.info h3{margin:6px 0 4px;font-size:24px}
+.price{font-family:'Cormorant Garamond',serif;font-size:21px;color:var(--muted)}
+.badge{position:absolute;top:14px;left:14px;z-index:2;background:var(--ink);color:var(--bg);font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:5px 12px;border-radius:99px}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:50px 0;font-family:'Cormorant Garamond',serif;font-size:26px}
+footer{position:relative;z-index:1;text-align:center;padding:50px 6vw;border-top:1px solid var(--line);color:var(--muted);font-size:12px;letter-spacing:.25em;text-transform:uppercase}
+.btn{position:relative;overflow:hidden;display:inline-block;border:0;background:linear-gradient(120deg,var(--gold),#d4a85c);color:#fff;padding:14px 32px;font:inherit;font-size:12px;letter-spacing:.24em;text-transform:uppercase;cursor:pointer;border-radius:99px;text-decoration:none;transition:.3s;box-shadow:0 8px 22px -8px rgba(184,138,68,.7)}
+.btn::after{content:"";position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);transition:.7s}
+.btn:hover::after{left:130%}
+.btn:hover{transform:translateY(-2px)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+header .btn.ghost{color:#fff;border-color:rgba(255,255,255,.4)}
+header.sc .btn.ghost{color:var(--ink);border-color:var(--line)}
+.btn.sm{padding:8px 16px;font-size:10px}
+.btn.danger{background:#a4473b;box-shadow:none}
+.ov{position:fixed;inset:0;background:rgba(15,9,5,.65);display:none;align-items:center;justify-content:center;padding:18px;z-index:50;backdrop-filter:blur(8px)}
+.ov.show{display:flex;animation:fi .3s}
+.ov.show>*{animation:pop .45s cubic-bezier(.2,.9,.3,1.1)}
+@keyframes fi{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:scale(.92) translateY(24px)}}
+.modal{background:var(--surface);max-width:860px;width:100%;max-height:92vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr;border-radius:18px;position:relative}
+.modal .ph{aspect-ratio:auto;min-height:380px;border-radius:0}
+.modal .body{padding:38px 32px;display:flex;flex-direction:column;gap:14px;justify-content:center}
+.modal h2{font-size:38px;margin:0;font-weight:400}
+.x{position:absolute;top:10px;right:14px;background:var(--glass);border:0;width:36px;height:36px;border-radius:50%;font-size:22px;color:var(--ink);cursor:pointer;z-index:2}
+@media(max-width:640px){.modal{grid-template-columns:1fr}.modal .ph{min-height:280px}.hero{min-height:86vh}}
+.panel{background:var(--surface);width:min(760px,100%);max-height:94vh;overflow:auto;padding:30px;border-radius:18px;position:relative}
+.panel h2{margin:0 0 4px;font-size:32px}
+label{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin:14px 0 5px}
+input,textarea,select{width:100%;padding:11px 13px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;border-radius:8px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.item .th{width:52px;height:52px;background:var(--blush);flex:none;overflow:hidden;border-radius:8px}
+.item .th img{width:100%;height:100%;object-fit:cover}
+.item div.n{flex:1;min-width:0}
+.item b{font-weight:500}
+.hint{font-size:12px;color:var(--muted)}
+.bar{position:sticky;bottom:-30px;background:var(--surface);padding:14px 0;margin-top:18px;display:flex;gap:10px;align-items:center;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.rv,.tag,.hero h1,.hero p,.cta{opacity:1!important;transform:none!important}}
+</style>
+</head>
+<body>
+<canvas id="sp"></canvas><div id="glow"></div>
+<div id="app"></div>
+<div class="ov" id="ovP"><div class="modal" id="modal"></div></div>
+<div class="ov" id="ovA"><div class="panel" id="panel"></div></div>
+<script id="data" type="application/json">{"name":"Vellora","tagline":"Brilho que conta a sua história","whatsapp":"","products":[]}</script>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let S=JSON.parse($('#data').textContent);
+let filter='Todas',canEdit=false,art=null,draft=null,dirty=false;
+const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+function render(){
+  const cats=['Todas',...new Set(S.products.map(p=>p.category).filter(Boolean))];
+  const list=S.products.filter(p=>filter==='Todas'||p.category===filter);
+  const mq=('✦ Elegância ✦ Brilho ✦ Delicadeza ✦ Estilo ✦ Feito para você ').repeat(8);
+  $('#app').innerHTML=`
+  <header id="hd"><div class="logo">${esc(S.name)}<small>SEMIJOIAS</small></div>
+  ${canEdit?'<button class="btn sm ghost" id="openAdm">Área da loja</button>':''}</header>
+  <section class="hero"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
+  <div class="tag">Nova coleção</div><h1>${esc(S.name)}<em>Semijoias</em></h1><p>${esc(S.tagline)}</p>
+  <div class="cta"><a class="btn" href="#colecao">Ver coleção</a></div><i class="scrl"></i></section>
+  <div class="mq"><div>${mq}${mq}</div></div>
+  <section class="sec" id="colecao"><div class="tag">Catálogo</div><h2 class="rv">Peças que <em>brilham</em> com você</h2>
+  <div class="chips rv">${cats.map(c=>`<button class="chip ${c===filter?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div></section>
+  <div class="grid">${list.length?list.map((p,i)=>`<div class="card rv" style="transition-delay:${(i%4)*90}ms" data-id="${p.id}">
+    ${p.soldOut?'<span class="badge">Esgotado</span>':''}
+    <div class="ph">${p.img?`<img src="${p.img}" alt="${esc(p.name)}">`:'✦'}<span class="ver">Ver peça</span></div>
+    <div class="info"><div class="cat">${esc(p.category)}</div><h3>${esc(p.name)}</h3><div class="price">${brl(p.price)}</div></div></div>`).join(''):
+    `<div class="empty">${canEdit?'Nenhuma peça ainda. Abra a “Área da loja” para cadastrar.':'Novidades chegando em breve ✦'}</div>`}</div>
+  <footer>${esc(S.name)} Semijoias · feitas para brilhar</footer>`;
+  document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{filter=b.dataset.c;render();$('#colecao').scrollIntoView({behavior:'smooth'})});
+  document.querySelectorAll('.card').forEach(c=>{
+    c.onclick=()=>openProd(c.dataset.id);
+    c.onmousemove=e=>{const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+      c.classList.add('tl');c.style.transform=`rotateY(${(x-.5)*10}deg) rotateX(${(.5-y)*10}deg) translateZ(6px)`;
+      c.style.setProperty('--mx',x*100+'%');c.style.setProperty('--my',y*100+'%')};
+    c.onmouseleave=()=>{c.classList.remove('tl');c.style.transform=''};
+  });
+  const o=$('#openAdm');if(o)o.onclick=openAdmin;
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+  document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+  onScroll();
+}
+function onScroll(){const h=$('#hd');if(h)h.classList.toggle('sc',scrollY>60)}
+addEventListener('scroll',onScroll,{passive:true});
+addEventListener('mousemove',e=>{const g=$('#glow');g.style.left=e.clientX+'px';g.style.top=e.clientY+'px'});
+
+/* brilhos no fundo */
+(()=>{const c=$('#sp'),x=c.getContext('2d');let W,H,st=[];
+  function rs(){W=c.width=innerWidth;H=c.height=innerHeight;st=Array.from({length:Math.min(70,W/18|0)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.8+.4,s:Math.random()*.4+.1,p:Math.random()*6}))}
+  rs();addEventListener('resize',rs);
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  (function t(n){x.clearRect(0,0,W,H);for(const s of st){s.y-=s.s;if(s.y<-5){s.y=H+5;s.x=Math.random()*W}
+    const a=.25+.55*Math.abs(Math.sin(n/900+s.p));x.globalAlpha=a;x.fillStyle='#e6c98b';x.beginPath();x.arc(s.x,s.y,s.r,0,6.3);x.fill()}
+    requestAnimationFrame(t)})(0)})();
+
+function openProd(id){
+  const p=S.products.find(x=>x.id===id);if(!p)return;
+  const num=(S.whatsapp||'').replace(/\D/g,'');
+  const msg=encodeURIComponent(`Olá! Tenho interesse na peça "${p.name}" (${brl(p.price)}) da ${S.name} Semijoias.`);
+  $('#modal').innerHTML=`<button class="x" id="cl">×</button>
+  <div class="ph">${p.img?`<img src="${p.img}" alt="${esc(p.name)}">`:'✦'}</div>
+  <div class="body"><div class="cat">${esc(p.category)}</div>
+  <h2>${esc(p.name)}</h2><div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold)">${brl(p.price)}</div>
+  <p style="color:var(--muted);white-space:pre-wrap;margin:0">${esc(p.desc)}</p>
+  ${p.soldOut?'<span class="hint">Peça esgotada no momento.</span>':num?`<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${num}?text=${msg}">Pedir pelo WhatsApp</a>`:''}</div>`;
+  $('#ovP').classList.add('show');$('#cl').onclick=()=>$('#ovP').classList.remove('show');
+}
+$('#ovP').onclick=e=>{if(e.target.id==='ovP')e.target.classList.remove('show')};
+
+/* ---------- Área da loja ---------- */
+function openAdmin(){draft=null;adminView();$('#ovA').classList.add('show')}
+function adminView(){
+  const P=$('#panel');
+  if(draft){
+    P.innerHTML=`<button class="x" id="ax">×</button><h2>${draft._new?'Nova peça':'Editar peça'}</h2>
+    <label>Foto</label><input type="file" id="f" accept="image/*">
+    <div id="prev" style="margin-top:8px">${draft.img?`<img src="${draft.img}" style="height:110px;border-radius:8px">`:''}</div>
+    <label>Nome</label><input id="n" value="${esc(draft.name)}">
+    <div class="row2"><div><label>Preço (R$)</label><input id="pr" type="number" step="0.01" value="${draft.price??''}"></div>
+    <div><label>Categoria</label><input id="ct" list="cl2" value="${esc(draft.category)}" placeholder="Brincos, Colares…"><datalist id="cl2">${[...new Set(S.products.map(p=>p.category))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div></div>
+    <label>Descrição</label><textarea id="d" rows="4">${esc(draft.desc)}</textarea>
+    <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:14px"><input type="checkbox" id="so" style="width:auto" ${draft.soldOut?'checked':''}> Peça esgotada</label>
+    <div class="bar"><button class="btn" id="ok">Salvar peça</button><button class="btn ghost" id="bk">Voltar</button></div>`;
+    $('#f').onchange=async e=>{const f=e.target.files[0];if(!f)return;draft.img=await shrink(f);$('#prev').innerHTML=`<img src="${draft.img}" style="height:110px;border-radius:8px">`};
+    $('#bk').onclick=()=>{draft=null;adminView()};
+    $('#ok').onclick=()=>{
+      draft.name=$('#n').value.trim();if(!draft.name){alert('Dê um nome à peça.');return}
+      draft.price=parseFloat($('#pr').value)||0;draft.category=$('#ct').value.trim()||'Outros';
+      draft.desc=$('#d').value.trim();draft.soldOut=$('#so').checked;
+      const isNew=draft._new;delete draft._new;
+      if(isNew)S.products.unshift(draft);else S.products=S.products.map(p=>p.id===draft.id?draft:p);
+      draft=null;dirty=true;adminView();render();
+    };
+  }else{
+    P.innerHTML=`<button class="x" id="ax">×</button><h2>Área da loja</h2>
+    <p class="hint" style="margin:0">Só você vê esta área. Depois de mexer, clique em “Publicar alterações”.</p>
+    <label>Nome da loja</label><input id="sn" value="${esc(S.name)}">
+    <label>Frase de destaque</label><input id="st" value="${esc(S.tagline)}">
+    <label>WhatsApp (com DDD, ex.: 11999998888)</label><input id="sw" value="${esc(S.whatsapp)}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:26px"><h2 style="font-size:26px">Peças (${S.products.length})</h2><button class="btn sm" id="add">+ Nova peça</button></div>
+    ${S.products.map(p=>`<div class="item"><div class="th">${p.img?`<img src="${p.img}">`:''}</div>
+    <div class="n"><b>${esc(p.name)}</b><div class="hint">${esc(p.category)} · ${brl(p.price)}${p.soldOut?' · esgotado':''}</div></div>
+    <button class="btn sm ghost" data-e="${p.id}">Editar</button><button class="btn sm danger" data-d="${p.id}">Excluir</button></div>`).join('')||'<p class="hint">Nenhuma peça cadastrada ainda.</p>'}
+    <div class="bar"><button class="btn" id="pub">Publicar alterações</button><span class="hint" id="msg">${dirty?'Há alterações não publicadas.':''}</span></div>`;
+    ['sn:name','st:tagline','sw:whatsapp'].forEach(x=>{const[i,k]=x.split(':');$('#'+i).oninput=e=>{S[k]=e.target.value;dirty=true}});
+    $('#add').onclick=()=>{draft={_new:1,id:'p'+Date.now().toString(36),name:'',price:'',category:'',desc:'',img:'',soldOut:false};adminView()};
+    P.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{draft={...S.products.find(p=>p.id===b.dataset.e)};adminView()});
+    P.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{if(confirm('Excluir esta peça?')){S.products=S.products.filter(p=>p.id!==b.dataset.d);dirty=true;adminView();render()}});
+    $('#pub').onclick=publish;
+  }
+  $('#ax').onclick=()=>{if(dirty&&!confirm('Há alterações não publicadas. Fechar mesmo assim?'))return;$('#ovA').classList.remove('show');render()};
+}
+
+function shrink(file){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+  const m=900,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');
+  c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.8))};im.src=r.result};r.readAsDataURL(file)})}
+
+async function publish(){
+  const msg=$('#msg');msg.textContent='Publicando…';
+  try{
+    const clone=document.documentElement.cloneNode(true);
+    clone.querySelector('#data').textContent=JSON.stringify(S).replace(/</g,'\\u003c');
+    clone.querySelector('#app').innerHTML='';clone.querySelector('#modal').innerHTML='';clone.querySelector('#panel').innerHTML='';
+    clone.querySelectorAll('.ov').forEach(o=>o.classList.remove('show'));
+    dirty=false;
+    await art.publish('<!doctype html>\n'+clone.outerHTML);
+  }catch(e){dirty=true;msg.textContent=e&&e.code==='conflict'?'A página mudou. Recarregue e tente de novo.':'Não foi possível publicar. Tente novamente.'}
+}
+
+render();
+(async()=>{
+  try{const u=await claude.use('user');art=await claude.use('artifact');
+    canEdit=!!(u&&u.isOwner()&&art);if(canEdit)render();}catch(e){}
+})();
+</script>
+</body>
+</html>
