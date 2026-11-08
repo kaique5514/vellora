@@ -118,3 +118,13 @@ header.sc .hb{color:var(--ink)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 
 a.hb{text-decoration:none}
+
+.qr{display:block;margin:6px auto 14px;width:220px;height:220px;image-rendering:pixelated;background:#fff;padding:8px;border-radius:12px}
+.pcode{font-size:12px;word-break:break-all;height:84px;resize:none}
+.st{display:inline-block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:4px 12px;border-radius:99px;background:var(--blush);color:var(--ink)}
+.steps{font-size:13px;color:var(--muted);padding-left:18px;margin:0;line-height:1.7}
+
+.seg{display:flex;border:1px solid var(--line)}.seg button{flex:1;border:0;background:none;color:var(--ink);padding:10px;font:inherit;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.cepbox{display:flex;gap:8px}.cepbox input{flex:1}
+.tt.sm{font-size:14px;color:var(--muted)}
