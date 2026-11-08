@@ -11,21 +11,107 @@
 <body>
 <div id="app"></div>
 <div class="ov" id="ovP"><div class="modal" id="modal"></div></div>
+<div class="ov" id="ovU"><div class="panel2" id="auth"></div></div>
+<div class="ov side" id="ovC"><aside class="drawer" id="cart"></aside></div>
+<div id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-let CV={},P=[],S={store_name:'Vellora',tagline:'',whatsapp:''},filter='Todas',err='';
+let CV={},P=[],S={store_name:'Vellora',tagline:'',whatsapp:''},filter='Todas',err='',user=null,cart={};
+const LS='vellora_cart';
+const gl=()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return{}}};
+const sl=()=>{try{localStorage.setItem(LS,JSON.stringify(cart))}catch(e){}};
+const count=()=>Object.values(cart).reduce((a,b)=>a+b,0);
+const configured=CFG.url&&!CFG.url.startsWith('COLE');
+const db=configured?supabase.createClient(CFG.url,CFG.key):null;
 
 async function load(){
-  if(!CFG.url||CFG.url.startsWith('COLE')){err='Configure o arquivo config.js.';return}
-  const db=supabase.createClient(CFG.url,CFG.key);
+  if(!db){err='Configure o arquivo config.js.';return}
   const [p,s,c]=await Promise.all([db.from('products').select('*').order('created_at',{ascending:false}),db.from('settings').select('*').eq('id',1).maybeSingle(),db.from('categories').select('*')]);
   if(p.error){err='Não foi possível carregar o catálogo.';return}
   P=p.data||[];if(s.data)S=s.data;CV={};(c.data||[]).forEach(x=>CV[x.name]=x.video_url);
 }
+
+/* ---------- sacola ---------- */
+async function loadCart(){
+  if(!user){cart=gl();return}
+  const r=await db.from('cart_items').select('product_id,qty');
+  cart={};(r.data||[]).forEach(x=>cart[x.product_id]=x.qty);
+  const l=gl(),ids=Object.keys(l).filter(id=>P.some(p=>p.id===id));
+  if(ids.length){ids.forEach(id=>cart[id]=Math.min(20,(cart[id]||0)+l[id]));
+    await db.from('cart_items').upsert(ids.map(id=>({user_id:user.id,product_id:id,qty:cart[id]})));}
+  if(Object.keys(l).length)try{localStorage.removeItem(LS)}catch(e){}
+}
+async function setQty(id,q){
+  if(q<=0)delete cart[id];else cart[id]=Math.min(q,20);
+  paintBadge();drawCart();
+  if(user){if(cart[id])await db.from('cart_items').upsert({user_id:user.id,product_id:id,qty:cart[id]});
+    else await db.from('cart_items').delete().eq('product_id',id).eq('user_id',user.id)}
+  else sl();
+}
+function addCart(id){setQty(id,(cart[id]||0)+1);toast('Adicionado à sacola ✓')}
+function drawCart(){
+  const it=Object.keys(cart).map(id=>({p:P.find(x=>x.id===id),q:cart[id]})).filter(x=>x.p);
+  const tot=it.reduce((a,x)=>a+x.p.price*x.q,0),num=(S.whatsapp||'').replace(/\D/g,'');
+  const msg=encodeURIComponent(`Olá! Quero finalizar meu pedido na ${S.store_name} Semijoias:\n\n`+it.map(x=>`• ${x.q}x ${x.p.name} — ${brl(x.p.price*x.q)}`).join('\n')+`\n\nTotal: ${brl(tot)}`);
+  $('#cart').innerHTML=`<div class="dh"><h2>Sua sacola</h2><button class="x2" id="cx">×</button></div>
+  <div class="dl">${it.length?it.map(({p,q})=>`<div class="ci"><div class="t">${p.image_url?`<img src="${esc(p.image_url)}" alt="">`:''}</div>
+    <div class="n">${esc(p.name)}<b>${brl(p.price)}</b><div><span class="qt"><button data-id="${p.id}" data-q="-1">−</button><span>${q}</span><button data-id="${p.id}" data-q="1">+</button></span><button class="rm" data-rm="${p.id}">Remover</button></div></div></div>`).join(''):'<p class="hint" style="padding:40px 0;text-align:center;font-size:15px">Sua sacola está vazia ✦</p>'}</div>
+  ${it.length?`<div class="df"><div class="tt"><span>Total</span><b>${brl(tot)}</b></div>
+    ${user?'':'<p class="hint" style="margin:0">Quer guardar sua sacola? <a id="cl">Crie sua conta</a> em segundos.</p>'}
+    ${num?`<a class="btn" style="text-align:center" target="_blank" rel="noopener" href="https://wa.me/${num}?text=${msg}">Finalizar pelo WhatsApp</a>`:'<p class="hint" style="margin:0">A loja ainda não configurou o WhatsApp.</p>'}</div>`:''}`;
+  $('#cx').onclick=closeAll;
+  document.querySelectorAll('#cart [data-q]').forEach(b=>b.onclick=()=>setQty(b.dataset.id,(cart[b.dataset.id]||0)+Number(b.dataset.q)));
+  document.querySelectorAll('#cart [data-rm]').forEach(b=>b.onclick=()=>setQty(b.dataset.rm,0));
+  const cl=$('#cl');if(cl)cl.onclick=()=>{closeAll();openAuth('criar')};
+}
+function paintBadge(){const n=$('#bn');if(n){n.textContent=count()||'';n.classList.toggle('on',count()>0)}}
+function paintHdr(){const a=$('#acc');if(a)a.textContent=user?'Minha conta':'Entrar'}
+function openCart(){drawCart();$('#ovC').classList.add('show')}
+function closeAll(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('show'))}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)}
+
+/* ---------- conta ---------- */
+const trad=m=>/invalid login/i.test(m)?'E-mail ou senha incorretos.':/already registered/i.test(m)?'Este e-mail já tem conta. Use “Entrar”.':/at least|weak/i.test(m)?'A senha precisa ter pelo menos 6 caracteres.':/valid email|invalid.*email|unable to validate/i.test(m)?'Confira o e-mail digitado.':/not confirmed/i.test(m)?'Confirme seu e-mail pelo link que enviamos.':/rate limit|too many/i.test(m)?'Muitas tentativas. Aguarde um pouco.':/disabled|not allowed/i.test(m)?'Cadastro indisponível no momento.':'Erro: '+m;
+function openAuth(mode){
+  if(!db)return;
+  const A=$('#auth'),x='<button class="x" id="ax">×</button>';
+  if(user&&mode!=='nova'){
+    A.innerHTML=`${x}<h2>Minha conta</h2><p class="hint" style="margin:0 0 18px">${esc(user.email)}</p><button class="btn" id="lo" style="width:100%">Sair da conta</button>`;
+    $('#lo').onclick=async()=>{await db.auth.signOut();closeAll()};
+  }else{
+    const T={entrar:'Entrar',criar:'Criar conta',esqueci:'Recuperar senha',nova:'Nova senha'};
+    A.innerHTML=`${x}<h2>${T[mode]}</h2><p class="hint" style="margin:0">${mode==='criar'?'Crie sua conta para guardar sua sacola e voltar quando quiser.':mode==='entrar'?'Entre para guardar sua sacola.':mode==='esqueci'?'Enviaremos um link para o seu e-mail.':''}</p>
+    ${mode!=='nova'?'<label>E-mail</label><input id="ue" type="email" autocomplete="email">':''}
+    ${mode==='esqueci'?'':`<label>${mode==='nova'?'Nova senha':'Senha'}</label><input id="up" type="password" autocomplete="${mode==='entrar'?'current-password':'new-password'}" placeholder="mínimo 6 caracteres">`}
+    <p><button class="btn" id="ug" style="width:100%">${{entrar:'Entrar',criar:'Criar minha conta',esqueci:'Enviar link',nova:'Salvar senha'}[mode]}</button></p><div class="msg" id="um"></div>
+    <div class="alt">${mode==='entrar'?'<a data-m="criar">Criar conta</a> · <a data-m="esqueci">Esqueci a senha</a>':mode==='criar'?'Já tem conta? <a data-m="entrar">Entrar</a>':mode==='esqueci'?'<a data-m="entrar">Voltar</a>':''}</div>`;
+    const say=(t,bad)=>{const m=$('#um');m.textContent=t;m.className='msg'+(bad?' bad':'')};
+    A.querySelectorAll('[data-m]').forEach(a=>a.onclick=()=>openAuth(a.dataset.m));
+    A.querySelectorAll('input').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter')$('#ug').click()});
+    $('#ug').onclick=async()=>{
+      const email=$('#ue')?.value.trim(),pw=$('#up')?.value;say('Aguarde…');let r;
+      if(mode==='entrar')r=await db.auth.signInWithPassword({email,password:pw});
+      else if(mode==='criar')r=await db.auth.signUp({email,password:pw});
+      else if(mode==='esqueci'){r=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});if(!r.error)return say('Enviamos o link para o seu e-mail ✓')}
+      else{r=await db.auth.updateUser({password:pw});if(!r.error){say('Senha alterada ✓');setTimeout(closeAll,1200);return}}
+      if(r.error)return say(trad(r.error.message||''),1);
+      if(mode==='criar'&&!r.data.session)return say('Conta criada! Confirme pelo link enviado ao seu e-mail e depois entre.');
+      closeAll();toast('Bem-vinda! ✓');
+    };
+  }
+  $('#ax').onclick=closeAll;$('#ovU').classList.add('show');
+}
+db?.auth.onAuthStateChange((ev,ses)=>setTimeout(async()=>{
+  const nu=ses?.user||null;
+  if(ev==='PASSWORD_RECOVERY'){user=nu;openAuth('nova');return}
+  if((nu?.id||null)!==(user?.id||null)){user=nu;await loadCart();paintHdr();paintBadge();drawCart()}
+},0));
+
+/* ---------- vitrine ---------- */
 function card(p,i){
   const off=p.old_price>p.price&&p.price>0?Math.round((1-p.price/p.old_price)*100):0,n=S.installments||5;
   return `<div class="card rv" style="transition-delay:${(i%2)*90}ms" data-id="${p.id}">
@@ -34,7 +120,7 @@ function card(p,i){
     <div class="info"><h3>${esc(p.name)}</h3>
     <div class="price">${off?`<s>${brl(p.old_price)}</s><i></i>`:''}<b>${brl(p.price)}</b></div>
     ${n>1&&p.price>0?`<div class="parc">${n} x de <b>${brl(p.price/n)}</b> sem juros</div>`:''}
-    <button class="buy" ${p.sold_out?'disabled':''}>${p.sold_out?'Esgotado':'Comprar'}</button></div></div>`}
+    <button class="buy" data-b="${p.id}" ${p.sold_out?'disabled':''}>${p.sold_out?'Esgotado':'Comprar'}</button></div></div>`}
 function render(){
   const only=[...new Set(P.map(p=>p.category).filter(Boolean))],cats=['Todas',...only];
   const list=P.filter(p=>filter==='Todas'||p.category===filter);
@@ -43,7 +129,9 @@ function render(){
   const tiles=only.length>1?`<section class="tiles">${only.map(c=>{const q=P.find(p=>p.category===c&&p.image_url);
     return `<div class="tile rv" data-c="${esc(c)}">${CV[c]?`<video autoplay muted loop playsinline preload="metadata"${q?` poster="${esc(q.image_url)}"`:''} src="${esc(CV[c])}"></video>`:q?`<img loading="lazy" src="${esc(q.image_url)}" alt="">`:''}<span>${esc(c)}</span></div>`}).join('')}</section>`:'';
   $('#app').innerHTML=`
-  <header id="hd"><div class="logo">${esc(S.store_name)}<small>SEMIJOIAS</small></div></header>
+  <header id="hd"><div class="logo">${esc(S.store_name)}<small>SEMIJOIAS</small></div>
+  <div class="hr">${db?`<button class="hb" id="acc">${user?'Minha conta':'Entrar'}</button>
+  <button class="hb" id="bag" aria-label="Sacola"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><i id="bn" class="${count()?'on':''}">${count()||''}</i></button>`:''}</div></header>
   <section class="hero"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
   <div class="tag">Nova coleção</div><h1>${esc(S.store_name)}<em>Semijoias</em></h1><p>${esc(S.tagline)}</p>
   <div class="cta"><a class="btn" href="#colecao">Ver coleção</a></div></section>
@@ -56,6 +144,8 @@ function render(){
   const go=c=>{filter=c;render();$('#colecao').scrollIntoView({behavior:'smooth'})};
   document.querySelectorAll('.chip,.tile').forEach(b=>b.onclick=()=>go(b.dataset.c));
   document.querySelectorAll('.card').forEach(c=>c.onclick=()=>openProd(c.dataset.id));
+  document.querySelectorAll('.buy:not([disabled])').forEach(b=>b.onclick=e=>{e.stopPropagation();addCart(b.dataset.b)});
+  const a=$('#acc'),g=$('#bag');if(a)a.onclick=()=>openAuth(user?'conta':'entrar');if(g)g.onclick=openCart;
   document.querySelectorAll('.tile video').forEach(v=>{v.muted=true;v.play().catch(()=>{})});
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.1});
   document.querySelectorAll('.rv').forEach(el=>io.observe(el));onScroll();
@@ -65,19 +155,26 @@ addEventListener('scroll',onScroll,{passive:true});
 
 function openProd(id){
   const p=P.find(x=>x.id===id);if(!p)return;
-  const num=(S.whatsapp||'').replace(/\D/g,'');
+  const num=(S.whatsapp||'').replace(/\D/g,''),n=S.installments||5;
   const msg=encodeURIComponent(`Olá! Tenho interesse na peça "${p.name}" (${brl(p.price)}) da ${S.store_name} Semijoias.`);
-  $('#modal').innerHTML=`<button class="x" id="cl">×</button>
+  $('#modal').innerHTML=`<button class="x" id="cl2">×</button>
   <div class="ph">${p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}">`:'✦'}</div>
   <div class="body"><div class="cat">${esc(p.category)}</div><h2>${esc(p.name)}</h2>
   <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:var(--gold)">${p.old_price>p.price?`<s style="font-size:20px;color:var(--muted)">${brl(p.old_price)}</s> `:''}${brl(p.price)}</div>
-  ${(S.installments||5)>1&&p.price>0?`<div class="hint" style="font-size:14px">ou ${S.installments||5} x de ${brl(p.price/(S.installments||5))} sem juros</div>`:''}
+  ${n>1&&p.price>0?`<div class="hint" style="font-size:14px">ou ${n} x de ${brl(p.price/n)} sem juros</div>`:''}
   <p style="color:var(--muted);white-space:pre-wrap;margin:0">${esc(p.description)}</p>
-  ${p.sold_out?'<span class="hint">Peça esgotada no momento.</span>':num?`<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${num}?text=${msg}">Pedir pelo WhatsApp</a>`:''}</div>`;
-  $('#ovP').classList.add('show');$('#cl').onclick=()=>$('#ovP').classList.remove('show');
+  ${p.sold_out?'<span class="hint">Peça esgotada no momento.</span>':`${db?'<button class="btn" id="addb">Adicionar à sacola</button>':''}${num?`<a class="btn ghost" style="text-align:center" target="_blank" rel="noopener" href="https://wa.me/${num}?text=${msg}">Pedir só esta peça pelo WhatsApp</a>`:''}`}</div>`;
+  $('#ovP').classList.add('show');$('#cl2').onclick=closeAll;
+  const b=$('#addb');if(b)b.onclick=()=>{addCart(p.id);closeAll()};
 }
-$('#ovP').onclick=e=>{if(e.target.id==='ovP')e.target.classList.remove('show')};
-render();load().then(render).catch(()=>{err='Não foi possível carregar o catálogo.';render()});
+document.querySelectorAll('.ov').forEach(o=>o.onclick=e=>{if(e.target===o)o.classList.remove('show')});
+
+render();
+(async()=>{
+  try{await load()}catch(e){err='Não foi possível carregar o catálogo.'}
+  if(db){try{const {data}=await db.auth.getSession();user=data.session?.user||null;await loadCart()}catch(e){cart=gl()}}
+  render();drawCart();
+})();
 </script>
 </body>
 </html>

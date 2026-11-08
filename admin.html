@@ -52,6 +52,8 @@ function loginView(){
 }
 
 async function panel(){
+  const ad=await db.rpc('is_admin');
+  if(ad.error||!ad.data){root.innerHTML='<div class="box login"><h1 style="margin:0 0 6px;font-size:30px">Acesso negado</h1><p class="hint">Esta conta não é a da dona da loja.</p><p><button class="btn" id="out2">Sair</button></p></div>';$('#out2').onclick=async()=>{await db.auth.signOut();loginView()};return}
   const [p,s,c]=await Promise.all([db.from('products').select('*').order('created_at',{ascending:false}),db.from('settings').select('*').eq('id',1).maybeSingle(),db.from('categories').select('*')]);
   CV={};(c.data||[]).forEach(x=>CV[x.name]=x.video_url);
   P=p.data||[];S=s.data||{id:1,store_name:'Vellora',tagline:'',whatsapp:''};
