@@ -21,8 +21,8 @@ header.sc .logo{color:var(--ink)}
 @keyframes up{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
 @keyframes shim{to{background-position:-250% 0}}
 .mq{overflow:hidden;background:var(--ink);color:var(--gold2);padding:15px 0;white-space:nowrap}
-.mq div{display:inline-block;animation:mq 28s linear infinite;font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.3em;text-transform:uppercase}
-@keyframes mq{to{transform:translateX(-50%)}}
+.mq div{display:inline-block;will-change:transform;animation:mq 150s linear infinite;font-family:'Cormorant Garamond',serif;font-size:20px;letter-spacing:.3em;text-transform:uppercase}
+@keyframes mq{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
 .sec{max-width:1300px;margin:0 auto;padding:80px 6vw 30px;text-align:center}
 .sec h2{font-size:clamp(34px,6vw,58px);margin:0;font-weight:400}.sec h2 em{color:var(--gold)}.sec .tag{opacity:1;animation:none}
 .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:28px}
