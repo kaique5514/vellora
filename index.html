@@ -23,6 +23,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 let CV={},P=[],S={store_name:'Vellora',tagline:'',whatsapp:''},filter='Todas',err='',user=null,cart={},isAdm=false;
 const LS='vellora_cart';
+let RV=[],rvAll=false;
 let ship={method:'entrega',cep:(()=>{try{return localStorage.getItem('vellora_cep')||''}catch(e){return''}})(),ok:false,msg:''},info=(()=>{try{return JSON.parse(localStorage.getItem('vellora_info'))||{}}catch(e){return{}}})();
 const fmtCep=c=>c.length===8?c.slice(0,5)+'-'+c.slice(5):c;
 const ST={aguardando:'Aguardando pagamento',pago:'Pago',enviado:'Enviado',cancelado:'Cancelado'};
@@ -34,9 +35,9 @@ const db=configured?supabase.createClient(CFG.url,CFG.key):null;
 
 async function load(){
   if(!db){err='Configure o arquivo config.js.';return}
-  const [p,s,c]=await Promise.all([db.from('products').select('*').order('created_at',{ascending:false}),db.from('settings').select('*').eq('id',1).maybeSingle(),db.from('categories').select('*')]);
+  const [p,s,c,rv]=await Promise.all([db.from('products').select('*').order('created_at',{ascending:false}),db.from('settings').select('*').eq('id',1).maybeSingle(),db.from('categories').select('*'),db.from('reviews').select('*').order('created_at',{ascending:false}).limit(100)]);
   if(p.error){err='Não foi possível carregar o catálogo.';return}
-  P=p.data||[];if(s.data)S=s.data;CV={};(c.data||[]).forEach(x=>CV[x.name]=x.video_url);
+  P=p.data||[];if(s.data)S=s.data;CV={};(c.data||[]).forEach(x=>CV[x.name]=x.video_url);RV=rv?.data||[];
 }
 
 /* ---------- sacola ---------- */
@@ -210,8 +211,51 @@ function openAuth(mode){
 db?.auth.onAuthStateChange((ev,ses)=>setTimeout(async()=>{
   const nu=ses?.user||null;
   if(ev==='PASSWORD_RECOVERY'){user=nu;openAuth('nova');return}
-  if((nu?.id||null)!==(user?.id||null)){user=nu;await loadCart();await checkAdmin();paintHdr();paintBadge();drawCart();quote()}
+  if((nu?.id||null)!==(user?.id||null)){user=nu;await loadCart();await checkAdmin();paintHdr();paintBadge();drawCart();quote();paintReviews()}
 },0));
+
+/* ---------- elogios ---------- */
+const stars=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+const mine=()=>user?RV.find(r=>r.user_id===user.id):null;
+function reviewsSec(){
+  if(!db)return '';
+  const n=RV.length,avg=n?RV.reduce((a,r)=>a+r.stars,0)/n:0,list=rvAll?RV:RV.slice(0,6);
+  return `<section class="rvs" id="elogios"><div class="tag">Elogios</div><h2 class="rv">O que dizem nossas <em>clientes</em></h2>
+  ${n?`<div class="avg rv"><b>${avg.toFixed(1).replace('.',',')}</b><span class="stars">${stars(Math.round(avg))}</span><small>${n} ${n===1?'avaliação':'avaliações'}</small></div>`:'<p class="hint" style="text-align:center;font-size:15px;margin-top:16px">Seja a primeira a deixar um elogio ✦</p>'}
+  <div class="rgrid">${list.map((r,i)=>`<figure class="rcard rv" style="transition-delay:${(i%3)*90}ms"><div class="stars">${stars(r.stars)}</div><blockquote>${esc(r.body)}</blockquote><figcaption><b>${esc(r.author)}</b>${r.verified?'<span class="ver2">✓ Compra verificada</span>':''}</figcaption></figure>`).join('')}</div>
+  <div class="rbt">${n>6&&!rvAll?'<button class="btn ghost" id="rmore">Ver mais elogios</button>':''}<button class="btn" id="rnew">${mine()?'Editar meu elogio':'Deixar meu elogio'}</button></div></section>`;
+}
+function bindReviews(){
+  const a=$('#rnew'),b=$('#rmore');
+  if(a)a.onclick=openReview;if(b)b.onclick=()=>{rvAll=true;paintReviews()};
+}
+function paintReviews(){const e=$('#elogios');if(!e)return;e.outerHTML=reviewsSec();document.querySelectorAll('#elogios .rv').forEach(x=>x.classList.add('in'));bindReviews()}
+async function loadReviews(){const r=await db.from('reviews').select('*').order('created_at',{ascending:false}).limit(100);RV=r.data||[]}
+function openReview(){
+  if(!user){closeAll();openAuth('entrar');toast('Entre para deixar seu elogio');return}
+  const m=mine()||{},A=$('#auth');let st=m.stars||5;
+  A.innerHTML=`<button class="x" id="ax">×</button><h2>${m.id?'Seu elogio':'Deixe seu elogio'}</h2><p class="hint" style="margin:0">Conte como foi a sua experiência. Ele aparece no site da loja.</p>
+  <div class="starpick" id="sp">${[1,2,3,4,5].map(n=>`<button data-s="${n}" aria-label="${n} estrelas">★</button>`).join('')}</div>
+  <label>Seu nome (aparece no site)</label><input id="rn" maxlength="40" value="${esc(m.author||(info.name||'').split(' ')[0]||'')}">
+  <label>Seu elogio</label><textarea id="rt" rows="4" maxlength="400" placeholder="O que você mais gostou?">${esc(m.body||'')}</textarea>
+  <p><button class="btn" id="rs" style="width:100%">${m.id?'Salvar alterações':'Publicar elogio'}</button></p>
+  ${m.id?'<p style="text-align:center;margin:0"><a class="hint" id="rd" style="cursor:pointer;text-decoration:underline">Apagar meu elogio</a></p>':''}<div class="msg" id="um"></div>`;
+  const say=(t,bad)=>{const e=$('#um');e.textContent=t;e.className='msg'+(bad?' bad':'')};
+  const paint=()=>document.querySelectorAll('#sp button').forEach(b=>b.classList.toggle('on',Number(b.dataset.s)<=st));
+  document.querySelectorAll('#sp button').forEach(b=>b.onclick=()=>{st=Number(b.dataset.s);paint()});paint();
+  $('#ax').onclick=closeAll;
+  $('#rs').onclick=async()=>{
+    const author=$('#rn').value.trim(),body=$('#rt').value.trim();
+    if(author.length<2)return say('Informe seu nome.',1);
+    if(body.length<5)return say('Escreva um pouquinho mais (mínimo 5 letras).',1);
+    say('Enviando…');const row={author,stars:st,body};
+    const r=m.id?await db.from('reviews').update(row).eq('id',m.id):await db.from('reviews').insert(row);
+    if(r.error)return say(/duplicate|unique/i.test(r.error.message)?'Você já enviou um elogio. Atualize a página para editá-lo.':'Não foi possível enviar agora. Tente de novo.',1);
+    await loadReviews();paintReviews();closeAll();toast('Obrigada pelo carinho! ✦');
+  };
+  const d=$('#rd');if(d)d.onclick=async()=>{if(!confirm('Apagar o seu elogio?'))return;await db.from('reviews').delete().eq('id',m.id);await loadReviews();paintReviews();closeAll();toast('Elogio apagado')};
+  $('#ovU').classList.add('show');
+}
 
 /* ---------- vitrine ---------- */
 function card(p,i){
@@ -242,6 +286,7 @@ function render(){
   <section class="sec" id="colecao"><div class="tag">Catálogo</div><h2 class="rv">Peças que <em>brilham</em> com você</h2>
   <div class="chips rv">${cats.map(c=>`<button class="chip ${c===filter?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div></section>
   <div class="grid">${err?`<div class="empty">${err}</div>`:list.length?list.map(card).join(''):'<div class="empty">Novidades chegando em breve ✦</div>'}</div>
+  ${reviewsSec()}
   <footer>${esc(S.store_name)} Semijoias · feitas para brilhar</footer>`;
   const go=c=>{filter=c;render();$('#colecao').scrollIntoView({behavior:'smooth'})};
   document.querySelectorAll('.chip,.tile').forEach(b=>b.onclick=()=>go(b.dataset.c));
@@ -249,6 +294,7 @@ function render(){
   document.querySelectorAll('.buy:not([disabled])').forEach(b=>b.onclick=e=>{e.stopPropagation();addCart(b.dataset.b)});
   const a=$('#acc'),g=$('#bag');if(a)a.onclick=()=>openAuth(user?'conta':'entrar');if(g)g.onclick=openCart;
   document.querySelectorAll('.tile video').forEach(v=>{v.muted=true;v.play().catch(()=>{})});
+  bindReviews();
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.1});
   document.querySelectorAll('.rv').forEach(el=>io.observe(el));onScroll();
 }

@@ -128,3 +128,18 @@ a.hb{text-decoration:none}
 .seg button.on{background:var(--ink);color:var(--bg)}
 .cepbox{display:flex;gap:8px}.cepbox input{flex:1}
 .tt.sm{font-size:14px;color:var(--muted)}
+
+.rvs{max-width:1200px;margin:0 auto;padding:30px 6vw 90px;text-align:center}
+.rvs h2{font-size:clamp(32px,5vw,52px);margin:6px 0 0;font-weight:400}.rvs h2 em{color:var(--gold)}.rvs .tag{opacity:1;animation:none}
+.avg{display:flex;align-items:center;justify-content:center;gap:12px;margin:20px 0 6px;flex-wrap:wrap}
+.avg b{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:500;line-height:1}.avg small{color:var(--muted)}
+.stars{color:var(--gold);letter-spacing:.12em;font-size:18px}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-top:30px;text-align:left}
+.rcard{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:12px}
+.rcard blockquote{margin:0;font-family:'Cormorant Garamond',serif;font-size:21px;line-height:1.35;font-style:italic;flex:1;overflow-wrap:anywhere}
+.rcard figcaption{font-size:13px;color:var(--muted)}.rcard figcaption b{color:var(--ink);font-weight:500}
+.ver2{color:var(--gold);font-size:11px;letter-spacing:.06em;margin-left:8px}
+.rbt{margin-top:28px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.starpick{display:flex;gap:4px;margin:16px 0 0}
+.starpick button{background:none;border:0;font-size:34px;color:var(--line);cursor:pointer;padding:0 2px;transition:.2s}
+.starpick button.on{color:var(--gold)}

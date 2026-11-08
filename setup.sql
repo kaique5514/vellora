@@ -243,3 +243,37 @@ begin
 end $$;
 revoke all on function public.create_order(text, text, jsonb) from public;
 grant execute on function public.create_order(text, text, jsonb) to authenticated;
+
+-- ============ ELOGIOS DAS CLIENTES ============
+create table if not exists reviews (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  author text not null check (char_length(author) between 2 and 40),
+  stars int not null check (stars between 1 and 5),
+  body text not null check (char_length(body) between 5 and 400),
+  verified boolean not null default false,
+  created_at timestamptz default now(),
+  unique (user_id)   -- cada cliente tem 1 elogio (ela pode editar ou apagar o dela)
+);
+alter table reviews enable row level security;
+
+drop policy if exists "elogios publicos" on reviews;
+create policy "elogios publicos" on reviews for select using (true);
+drop policy if exists "cliente envia elogio" on reviews;
+create policy "cliente envia elogio" on reviews for insert to authenticated with check (user_id = auth.uid());
+drop policy if exists "cliente edita elogio" on reviews;
+create policy "cliente edita elogio" on reviews for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "cliente ou dona apaga elogio" on reviews;
+create policy "cliente ou dona apaga elogio" on reviews for delete to authenticated using (user_id = auth.uid() or public.is_admin());
+
+-- "Compra verificada" é decidido pelo servidor (a cliente não consegue marcar sozinha)
+create or replace function public.reviews_set_verified() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if tg_op = 'UPDATE' then new.user_id := old.user_id; end if;
+  new.verified := exists (select 1 from orders o where o.user_id = new.user_id and o.status in ('pago', 'enviado'));
+  return new;
+end $$;
+drop trigger if exists reviews_verified on reviews;
+create trigger reviews_verified before insert or update on reviews
+  for each row execute function public.reviews_set_verified();
