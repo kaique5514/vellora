@@ -20,7 +20,7 @@
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-let CV={},P=[],S={store_name:'Vellora',tagline:'',whatsapp:''},filter='Todas',err='',user=null,cart={};
+let CV={},P=[],S={store_name:'Vellora',tagline:'',whatsapp:''},filter='Todas',err='',user=null,cart={},isAdm=false;
 const LS='vellora_cart';
 const gl=()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return{}}};
 const sl=()=>{try{localStorage.setItem(LS,JSON.stringify(cart))}catch(e){}};
@@ -69,7 +69,9 @@ function drawCart(){
   const cl=$('#cl');if(cl)cl.onclick=()=>{closeAll();openAuth('criar')};
 }
 function paintBadge(){const n=$('#bn');if(n){n.textContent=count()||'';n.classList.toggle('on',count()>0)}}
-function paintHdr(){const a=$('#acc');if(a)a.textContent=user?'Minha conta':'Entrar'}
+function paintHdr(){const a=$('#acc');if(a)a.textContent=user?'Minha conta':'Entrar';
+  let l=$('#adm');if(isAdm&&!l&&a){l=document.createElement('a');l.id='adm';l.className='hb';l.href='admin.html';l.textContent='Painel';a.before(l)}else if(!isAdm&&l)l.remove()}
+async function checkAdmin(){isAdm=false;if(!user)return;try{const r=await db.rpc('is_admin');isAdm=r.data===true}catch(e){}}
 function openCart(){drawCart();$('#ovC').classList.add('show')}
 function closeAll(){document.querySelectorAll('.ov').forEach(o=>o.classList.remove('show'))}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)}
@@ -80,7 +82,7 @@ function openAuth(mode){
   if(!db)return;
   const A=$('#auth'),x='<button class="x" id="ax">×</button>';
   if(user&&mode!=='nova'){
-    A.innerHTML=`${x}<h2>Minha conta</h2><p class="hint" style="margin:0 0 18px">${esc(user.email)}</p><button class="btn" id="lo" style="width:100%">Sair da conta</button>`;
+    A.innerHTML=`${x}<h2>Minha conta</h2><p class="hint" style="margin:0 0 18px">${esc(user.email)}</p>${isAdm?'<a class="btn" href="admin.html" style="display:block;text-align:center;margin-bottom:10px">Ir para o painel da loja</a>':''}<button class="btn ghost" id="lo" style="width:100%">Sair da conta</button>`;
     $('#lo').onclick=async()=>{await db.auth.signOut();closeAll()};
   }else{
     const T={entrar:'Entrar',criar:'Criar conta',esqueci:'Recuperar senha',nova:'Nova senha'};
@@ -108,7 +110,7 @@ function openAuth(mode){
 db?.auth.onAuthStateChange((ev,ses)=>setTimeout(async()=>{
   const nu=ses?.user||null;
   if(ev==='PASSWORD_RECOVERY'){user=nu;openAuth('nova');return}
-  if((nu?.id||null)!==(user?.id||null)){user=nu;await loadCart();paintHdr();paintBadge();drawCart()}
+  if((nu?.id||null)!==(user?.id||null)){user=nu;await loadCart();await checkAdmin();paintHdr();paintBadge();drawCart()}
 },0));
 
 /* ---------- vitrine ---------- */
@@ -130,7 +132,7 @@ function render(){
     return `<div class="tile rv" data-c="${esc(c)}">${CV[c]?`<video autoplay muted loop playsinline preload="metadata"${q?` poster="${esc(q.image_url)}"`:''} src="${esc(CV[c])}"></video>`:q?`<img loading="lazy" src="${esc(q.image_url)}" alt="">`:''}<span>${esc(c)}</span></div>`}).join('')}</section>`:'';
   $('#app').innerHTML=`
   <header id="hd"><div class="logo">${esc(S.store_name)}<small>SEMIJOIAS</small></div>
-  <div class="hr">${db?`<button class="hb" id="acc">${user?'Minha conta':'Entrar'}</button>
+  <div class="hr">${db?`${isAdm?'<a class="hb" id="adm" href="admin.html">Painel</a>':''}<button class="hb" id="acc">${user?'Minha conta':'Entrar'}</button>
   <button class="hb" id="bag" aria-label="Sacola"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><i id="bn" class="${count()?'on':''}">${count()||''}</i></button>`:''}</div></header>
   <section class="hero"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
   <div class="tag">Nova coleção</div><h1>${esc(S.store_name)}<em>Semijoias</em></h1><p>${esc(S.tagline)}</p>
@@ -172,7 +174,7 @@ document.querySelectorAll('.ov').forEach(o=>o.onclick=e=>{if(e.target===o)o.clas
 render();
 (async()=>{
   try{await load()}catch(e){err='Não foi possível carregar o catálogo.'}
-  if(db){try{const {data}=await db.auth.getSession();user=data.session?.user||null;await loadCart()}catch(e){cart=gl()}}
+  if(db){try{const {data}=await db.auth.getSession();user=data.session?.user||null;await loadCart();await checkAdmin()}catch(e){cart=gl()}}
   render();drawCart();
 })();
 </script>

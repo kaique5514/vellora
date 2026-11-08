@@ -116,3 +116,5 @@ header.sc .hb{color:var(--ink)}
 .tt{display:flex;justify-content:space-between;font-size:18px}.tt b{font-weight:500}
 #toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,30px);background:#111;color:#fff;padding:12px 22px;border-radius:99px;font-size:13px;letter-spacing:.08em;opacity:0;pointer-events:none;transition:.4s;z-index:90;white-space:nowrap}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+
+a.hb{text-decoration:none}
